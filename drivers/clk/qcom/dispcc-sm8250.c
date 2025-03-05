@@ -1778,25 +1778,13 @@ static int disp_cc_sm8250_fixup(struct platform_device *pdev,
 		disp_cc_pll1.vco_table = lucid_5lpe_vco;
 	}
 
-	return 0;
-}
-
-static int disp_cc_sm8250_probe(struct platform_device *pdev)
-{
-	struct regmap *regmap;
-	int ret;
-
-	regmap = qcom_cc_map(pdev, &disp_cc_sm8250_desc);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
-
-
-	ret = disp_cc_sm8250_fixup(pdev, regmap);
-	if (ret)
-		return ret;
-
-	clk_lucid_pll_configure(&disp_cc_pll0, regmap, disp_cc_pll0.config);
-	clk_lucid_pll_configure(&disp_cc_pll1, regmap, disp_cc_pll1.config);
+	if (of_device_is_compatible(pdev->dev.of_node, "qcom,sm8350-dispcc")) {
+		clk_lucid_5lpe_pll_configure(&disp_cc_pll0, regmap, &disp_cc_pll0_config);
+		clk_lucid_5lpe_pll_configure(&disp_cc_pll1, regmap, &disp_cc_pll1_config);
+	} else {
+		clk_lucid_pll_configure(&disp_cc_pll0, regmap, &disp_cc_pll0_config);
+		clk_lucid_pll_configure(&disp_cc_pll1, regmap, &disp_cc_pll1_config);
+	}
 
 	/* Enable clock gating for MDP clocks */
 	regmap_update_bits(regmap, 0x8000, 0x10, 0x10);
